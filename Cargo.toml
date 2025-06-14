@@ -1,0 +1,5 @@
+[workspace]
+members = ["dark-protocol-legacy/program"]
+
+[patch.crates-io]
+ark-ec = { path = "patches/ark-ec" }

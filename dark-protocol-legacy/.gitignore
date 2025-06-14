@@ -1,0 +1,9 @@
+/program/target
+/program/Cargo.lock
+*/.coderrect
+/program/dist/program/*.so
+*/*.so
+*/test-ledger
+/program/dist/
+/program/docker-target
+*/.anchor
