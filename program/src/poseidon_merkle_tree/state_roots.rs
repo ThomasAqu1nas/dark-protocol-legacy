@@ -78,16 +78,16 @@ pub fn check_root_hash_exists(
     msg!("Passed-in merkle_tree_pda pubkey: {:?}", *merkle_tree_pda);
     msg!(
         "Checks against hardcoded merkle_tree_pda pubkey: {:?}",
-        solana_program::pubkey::Pubkey::new(
-            &MERKLE_TREE_ACC_BYTES_ARRAY
+        solana_program::pubkey::Pubkey::from(
+            MERKLE_TREE_ACC_BYTES_ARRAY
                 [<usize as TryFrom<u8>>::try_from(merkle_tree_index).unwrap()]
             .0
         )
     );
 
     if *merkle_tree_pda.key
-        != solana_program::pubkey::Pubkey::new(
-            &MERKLE_TREE_ACC_BYTES_ARRAY
+        != solana_program::pubkey::Pubkey::from(
+            MERKLE_TREE_ACC_BYTES_ARRAY
                 [<usize as TryFrom<u8>>::try_from(merkle_tree_index).unwrap()]
             .0,
         )

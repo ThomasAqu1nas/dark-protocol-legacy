@@ -47,7 +47,7 @@ pub fn process_instruction(
     accounts: &[AccountInfo],
     _instruction_data: &[u8],
 ) -> ProgramResult {
-    let accounts_mut = accounts.clone();
+    let accounts_mut = accounts;
     let account = &mut accounts_mut.iter();
     // 0. `[]` signer
     let signer_account = next_account_info(account)?;
@@ -59,7 +59,7 @@ pub fn process_instruction(
     if _instruction_data.len() >= 9 && _instruction_data[8] == 240 {
         let merkle_tree_storage_acc = next_account_info(account)?;
         // Check whether signer is merkle_tree_init_authority.
-        if *signer_account.key != Pubkey::new(&MERKLE_TREE_INIT_AUTHORITY) {
+        if *signer_account.key != Pubkey::from(MERKLE_TREE_INIT_AUTHORITY) {
             msg!("Signer is not merkle tree init authority.");
             return Err(ProgramError::IllegalOwner);
         }

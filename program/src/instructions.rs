@@ -145,7 +145,7 @@ pub fn create_and_try_initialize_tmp_storage_pda(
     rent_exempt: bool,
     _instruction_data: &[u8],
 ) -> Result<(), ProgramError> {
-    let accounts_mut = accounts.clone();
+    let accounts_mut = accounts;
     let account = &mut accounts_mut.iter();
     let signer_account = next_account_info(account)?;
     let account_main = next_account_info(account)?;
@@ -189,7 +189,7 @@ pub fn check_tx_integrity_hash(
     ]
     .concat();
     // msg!("integrity_hash inputs: {:?}", input);
-    let hash = solana_program::keccak::hash(&input[..]).try_to_vec()?;
+    let hash = solana_program::keccak::hash(&input[..]).0.try_to_vec()?;
     msg!("hash computed {:?}", hash);
 
     if Fq::from_be_bytes_mod_order(&hash[..]) != Fq::from_le_bytes_mod_order(&tx_integrity_hash) {
@@ -378,15 +378,15 @@ pub fn try_initialize_tmp_storage_pda(
     .concat();
     tmp_storage_pda_data.recipient = _instruction_data[480..512].to_vec();
     tmp_storage_pda_data.ext_amount = _instruction_data[512..520].to_vec();
-    let relayer = _instruction_data[520..552].to_vec();
+    let relayer =  *arrayref::array_ref![_instruction_data[520..552], 0, 32];
 
     // Check that relayer in integrity hash == signer.
     // In case of deposit the depositor is their own relayer
-    if *signing_address != Pubkey::new(&relayer) {
+    if *signing_address != Pubkey::from(relayer) {
         msg!(
             "Specified relayer is not signer. {:?} != {:?}",
             *signing_address,
-            Pubkey::new(&relayer)
+            Pubkey::from(relayer)
         );
         return Err(ProgramError::InvalidAccountData);
     }
