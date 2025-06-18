@@ -59,7 +59,7 @@ pub fn process_instruction(
     if _instruction_data.len() >= 9 && _instruction_data[8] == 240 {
         let merkle_tree_storage_acc = next_account_info(account)?;
         // Check whether signer is merkle_tree_init_authority.
-        if *signer_account.key != Pubkey::from(MERKLE_TREE_INIT_AUTHORITY) {
+        if *signer_account.key != Pubkey::new(&MERKLE_TREE_INIT_AUTHORITY) {
             msg!("Signer is not merkle tree init authority.");
             return Err(ProgramError::IllegalOwner);
         }

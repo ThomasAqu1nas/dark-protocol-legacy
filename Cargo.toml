@@ -1,5 +1,9 @@
 [workspace]
-members = ["dark-protocol-legacy/program"]
+members = [ "client","dark-protocol-legacy/program"]
+resolver = "3"
 
 [patch.crates-io]
 ark-ec = { path = "patches/ark-ec" }
+
+[workspace.dependencies]
+solana-program = "1.8.16"

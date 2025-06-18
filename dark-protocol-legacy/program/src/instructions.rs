@@ -137,7 +137,8 @@ pub fn token_transfer<'a, 'b>(
 }
 
 #[allow(clippy::clone_double_ref)]
-pub fn create_and_try_initialize_tmp_storage_pda(
+pub fn 
+create_and_try_initialize_tmp_storage_pda(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
     number_storage_bytes: u64,
@@ -353,7 +354,7 @@ pub fn try_initialize_tmp_storage_pda(
     // store zero knowledge prepared inputs bytes
     groth16_processor.try_initialize(
         &_instruction_data[PREPARED_INPUTS_RANGE_START..PREPARED_INPUTS_RANGE_END],
-    )?;
+    )?; 
 
     tmp_storage_pda_data.signing_address = signing_address.to_bytes().to_vec();
     tmp_storage_pda_data.root_hash = _instruction_data[0..32].to_vec();
@@ -378,15 +379,15 @@ pub fn try_initialize_tmp_storage_pda(
     .concat();
     tmp_storage_pda_data.recipient = _instruction_data[480..512].to_vec();
     tmp_storage_pda_data.ext_amount = _instruction_data[512..520].to_vec();
-    let relayer =  *arrayref::array_ref![_instruction_data[520..552], 0, 32];
+    let relayer =  arrayref::array_ref![_instruction_data[520..552], 0, 32];
 
     // Check that relayer in integrity hash == signer.
     // In case of deposit the depositor is their own relayer
-    if *signing_address != Pubkey::from(relayer) {
+    if *signing_address != Pubkey::new(relayer) {
         msg!(
             "Specified relayer is not signer. {:?} != {:?}",
             *signing_address,
-            Pubkey::from(relayer)
+            Pubkey::new(relayer)
         );
         return Err(ProgramError::InvalidAccountData);
     }

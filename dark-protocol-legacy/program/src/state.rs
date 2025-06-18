@@ -227,7 +227,7 @@ impl Pack for InstructionIndex {
 
             Ok(InstructionIndex {
                 is_initialized: true,
-                signer_pubkey: solana_program::pubkey::Pubkey::from(*signer_pubkey),
+                signer_pubkey: solana_program::pubkey::Pubkey::new(signer_pubkey),
                 current_instruction_index: usize::from_le_bytes(*current_instruction_index),
             })
         }

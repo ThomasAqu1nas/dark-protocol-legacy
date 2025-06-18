@@ -40,7 +40,7 @@ impl Pack for UserAccount {
             Ok(UserAccount {
                 is_initialized: true,
                 account_type: USER_ACCOUNT_TYPE,
-                owner_pubkey: solana_program::pubkey::Pubkey::from(*owner_pubkey),
+                owner_pubkey: solana_program::pubkey::Pubkey::new(owner_pubkey),
                 modified_ranges: Vec::new(),
                 enc_utxos: enc_utxos.to_vec(),
                 mode_init: true,
