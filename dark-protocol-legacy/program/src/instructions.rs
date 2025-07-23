@@ -4,16 +4,18 @@ use ark_ff::PrimeField;
 use crate::nullifier_state::NullifierState;
 use crate::state::ChecksAndTransferState;
 use crate::utils::config::{
-    ENCRYPTED_UTXOS_LENGTH, MERKLE_TREE_ACC_BYTES_ARRAY, TMP_STORAGE_ACCOUNT_TYPE,
+    ENCRYPTED_UTXOS_LENGTH,
+    MERKLE_TREE_ACC_BYTES_ARRAY,
+    TMP_STORAGE_ACCOUNT_TYPE,
 };
 use crate::Groth16Processor;
 use ark_ed_on_bn254::FqParameters;
-use ark_ff::{biginteger::BigInteger256, bytes::FromBytes, fields::FpParameters, BigInteger};
+use ark_ff::{ biginteger::BigInteger256, bytes::FromBytes, fields::FpParameters, BigInteger };
 use borsh::BorshSerialize;
 use solana_program::program::invoke_signed;
 use solana_program::system_instruction;
 use solana_program::{
-    account_info::{next_account_info, AccountInfo},
+    account_info::{ next_account_info, AccountInfo },
     msg,
     program_error::ProgramError,
     program_pack::Pack,
@@ -21,17 +23,19 @@ use solana_program::{
     sysvar::rent::Rent,
     sysvar::Sysvar,
 };
-use std::convert::{TryFrom, TryInto};
+use std::convert::{ TryFrom, TryInto };
 
 #[allow(clippy::comparison_chain)]
 pub fn check_external_amount(
-    tmp_storage_pda_data: &ChecksAndTransferState,
+    tmp_storage_pda_data: &ChecksAndTransferState
 ) -> Result<(u64, u64), ProgramError> {
-    let ext_amount =
-        i64::from_le_bytes(tmp_storage_pda_data.ext_amount.clone().try_into().unwrap());
+    let ext_amount = i64::from_le_bytes(
+        tmp_storage_pda_data.ext_amount.clone().try_into().unwrap()
+    );
     // ext_amount includes relayer_fee
-    let relayer_fee =
-        u64::from_le_bytes(tmp_storage_pda_data.relayer_fee.clone().try_into().unwrap());
+    let relayer_fee = u64::from_le_bytes(
+        tmp_storage_pda_data.relayer_fee.clone().try_into().unwrap()
+    );
     // pub_amount is the public amount included in public inputs for proof verification
     let pub_amount = <BigInteger256 as FromBytes>::read(&tmp_storage_pda_data.amount[..]).unwrap();
 
@@ -74,12 +78,7 @@ pub fn check_external_amount(
             return Err(ProgramError::InvalidInstructionData);
         }
 
-        if field.0[0]
-            != u64::try_from(-ext_amount)
-                .unwrap()
-                .checked_add(relayer_fee)
-                .unwrap()
-        {
+        if field.0[0] != u64::try_from(-ext_amount).unwrap().checked_add(relayer_fee).unwrap() {
             msg!(
                 "Withdrawal invalid external amount: {} != {}",
                 pub_amount.0[0],
@@ -103,7 +102,7 @@ pub fn token_transfer<'a, 'b>(
     authority: &'b AccountInfo<'a>,
     seed: &[u8],
     bump_seed: &[u8],
-    amount: u64,
+    amount: u64
 ) -> Result<(), ProgramError> {
     let authority_signature_seeds = [seed, bump_seed];
 
@@ -121,30 +120,24 @@ pub fn token_transfer<'a, 'b>(
         destination.key,
         authority.key,
         &[],
-        amount,
+        amount
     )?;
     invoke_signed(
         &ix,
-        &[
-            source.clone(),
-            destination.clone(),
-            authority.clone(),
-            token_program.clone(),
-        ],
-        signers,
+        &[source.clone(), destination.clone(), authority.clone(), token_program.clone()],
+        signers
     )?;
     Ok(())
 }
 
 #[allow(clippy::clone_double_ref)]
-pub fn 
-create_and_try_initialize_tmp_storage_pda(
+pub fn create_and_try_initialize_tmp_storage_pda(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
     number_storage_bytes: u64,
     lamports: u64,
     rent_exempt: bool,
-    _instruction_data: &[u8],
+    _instruction_data: &[u8]
 ) -> Result<(), ProgramError> {
     let accounts_mut = accounts;
     let account = &mut accounts_mut.iter();
@@ -160,11 +153,11 @@ create_and_try_initialize_tmp_storage_pda(
         account_main,
         system_program_info,
         rent,
-        &_instruction_data[64..96],
+        &_instruction_data[64..96], //hash
         &b"storage"[..],
         number_storage_bytes, //bytes
-        lamports,             //lamports
-        rent_exempt,          //rent_exempt
+        lamports, //lamports
+        rent_exempt //rent_exempt
     )?;
     try_initialize_tmp_storage_pda(account_main, _instruction_data, signer_account.key)
 }
@@ -177,7 +170,7 @@ pub fn check_tx_integrity_hash(
     tx_integrity_hash: Vec<u8>,
     merkle_tree_index: u8,
     encrypted_utxos: Vec<u8>,
-    merkle_tree_pda_pubkey: Vec<u8>,
+    merkle_tree_pda_pubkey: Vec<u8>
 ) -> Result<(), ProgramError> {
     let input = [
         recipient,
@@ -187,18 +180,20 @@ pub fn check_tx_integrity_hash(
         merkle_tree_pda_pubkey,
         vec![merkle_tree_index],
         encrypted_utxos,
-    ]
-    .concat();
+    ].concat();
     // msg!("integrity_hash inputs: {:?}", input);
-    let hash = solana_program::keccak::hash(&input[..]).0.try_to_vec()?;
+    let hash = solana_poseidon
+        ::hash(
+            solana_poseidon::Parameters::Bn254X5,
+            solana_poseidon::Endianness::LittleEndian,
+            &input[..]
+        )
+        .map_err(|e| u64::from_le_bytes(*b"poseidon") + u64::from(e))
+        ? // b'poseidon' = 8101821134059892590
+        .0.try_to_vec()?;
     msg!("hash computed {:?}", hash);
-
     if Fq::from_be_bytes_mod_order(&hash[..]) != Fq::from_le_bytes_mod_order(&tx_integrity_hash) {
-        msg!(
-            "tx_integrity_hash verification failed.{:?} != {:?}",
-            &hash[..],
-            &tx_integrity_hash
-        );
+        msg!("tx_integrity_hash verification failed.{:?} != {:?}", &hash[..], &tx_integrity_hash);
         return Err(ProgramError::InvalidInstructionData);
     }
     Ok(())
@@ -210,7 +205,7 @@ pub fn check_and_insert_nullifier<'a, 'b>(
     nullifier_account: &'a AccountInfo<'b>,
     system_program: &'a AccountInfo<'b>,
     rent: &Rent,
-    _instruction_data: &[u8],
+    _instruction_data: &[u8]
 ) -> Result<u8, ProgramError> {
     create_and_check_pda(
         program_id,
@@ -222,20 +217,20 @@ pub fn check_and_insert_nullifier<'a, 'b>(
         &b"nf"[..],
         2u64, //nullifier pda length
         0u64, //lamports
-        true, //rent_exempt
+        true //rent_exempt
     )?;
     // Initializing nullifier pda.
     let nullifier_account_data = NullifierState::unpack(&nullifier_account.data.borrow())?;
     NullifierState::pack_into_slice(
         &nullifier_account_data,
-        &mut nullifier_account.data.borrow_mut(),
+        &mut nullifier_account.data.borrow_mut()
     );
     Ok(1u8)
 }
 
 pub fn close_account(
     account: &AccountInfo,
-    dest_account: &AccountInfo,
+    dest_account: &AccountInfo
 ) -> Result<(), ProgramError> {
     //close account by draining lamports
     let dest_starting_lamports = dest_account.lamports();
@@ -252,7 +247,7 @@ pub fn close_account(
 pub fn sol_transfer(
     from_account: &AccountInfo,
     dest_account: &AccountInfo,
-    amount: u64,
+    amount: u64
 ) -> Result<(), ProgramError> {
     let from_starting_lamports = from_account.lamports();
     **from_account.lamports.borrow_mut() = from_starting_lamports
@@ -276,10 +271,12 @@ pub fn create_and_check_pda<'a, 'b>(
     domain_separation_seed: &[u8],
     number_storage_bytes: u64,
     lamports: u64,
-    rent_exempt: bool,
+    rent_exempt: bool
 ) -> Result<(), ProgramError> {
-    let derived_pubkey =
-        Pubkey::find_program_address(&[_instruction_data, domain_separation_seed], program_id);
+    let derived_pubkey = Pubkey::find_program_address(
+        &[_instruction_data, domain_separation_seed],
+        program_id
+    );
 
     if derived_pubkey.0 != *passed_in_pda.key {
         msg!("Passed-in pda pubkey != on-chain derived pda pubkey.");
@@ -298,30 +295,20 @@ pub fn create_and_check_pda<'a, 'b>(
     msg!("account_lamports: {}", account_lamports);
     invoke_signed(
         &system_instruction::create_account(
-            signer_account.key,   // from_pubkey
-            passed_in_pda.key,    // to_pubkey
-            account_lamports,     // lamports
+            signer_account.key, // from_pubkey
+            passed_in_pda.key, // to_pubkey
+            account_lamports, // lamports
             number_storage_bytes, // space
-            program_id,           // owner
+            program_id // owner
         ),
-        &[
-            signer_account.clone(),
-            passed_in_pda.clone(),
-            system_program.clone(),
-        ],
-        &[&[
-            _instruction_data,
-            domain_separation_seed,
-            &[derived_pubkey.1],
-        ]],
+        &[signer_account.clone(), passed_in_pda.clone(), system_program.clone()],
+        &[&[_instruction_data, domain_separation_seed, &[derived_pubkey.1]]]
     )?;
 
     // Check for rent exemption
-    if rent_exempt
-        && !rent.is_exempt(
-            **passed_in_pda.lamports.borrow(),
-            number_storage_bytes.try_into().unwrap(),
-        )
+    if
+        rent_exempt &&
+        !rent.is_exempt(**passed_in_pda.lamports.borrow(), number_storage_bytes.try_into().unwrap())
     {
         msg!("Account is not rent exempt.");
         return Err(ProgramError::AccountNotRentExempt);
@@ -337,24 +324,21 @@ pub const PROOF_A_B_C_RANGE_END: usize = 480;
 pub fn try_initialize_tmp_storage_pda(
     tmp_storage_pda: &AccountInfo,
     _instruction_data: &[u8],
-    signing_address: &Pubkey,
+    signing_address: &Pubkey
 ) -> Result<(), ProgramError> {
-    msg!(
-        "Initializing tmp_storage_pda: {}",
-        tmp_storage_pda.data.borrow().len()
-    );
+    msg!("Initializing tmp_storage_pda: {}", tmp_storage_pda.data.borrow().len());
     // Initializing temporary storage pda with instruction data.
     let mut tmp_storage_pda_data = ChecksAndTransferState::unpack(&tmp_storage_pda.data.borrow())?;
     tmp_storage_pda_data.account_type = TMP_STORAGE_ACCOUNT_TYPE;
 
     let mut groth16_processor = Groth16Processor::new(
         tmp_storage_pda,
-        tmp_storage_pda_data.current_instruction_index,
+        tmp_storage_pda_data.current_instruction_index
     )?;
     // store zero knowledge prepared inputs bytes
     groth16_processor.try_initialize(
-        &_instruction_data[PREPARED_INPUTS_RANGE_START..PREPARED_INPUTS_RANGE_END],
-    )?; 
+        &_instruction_data[PREPARED_INPUTS_RANGE_START..PREPARED_INPUTS_RANGE_END]
+    )?;
 
     tmp_storage_pda_data.signing_address = signing_address.to_bytes().to_vec();
     tmp_storage_pda_data.root_hash = _instruction_data[0..32].to_vec();
@@ -375,19 +359,18 @@ pub fn try_initialize_tmp_storage_pda(
         input_nullifier_0.to_vec(),
         input_nullifier_1.to_vec(),
         encrypted_utxos.to_vec(),
-    ]
-    .concat();
+    ].concat();
     tmp_storage_pda_data.recipient = _instruction_data[480..512].to_vec();
     tmp_storage_pda_data.ext_amount = _instruction_data[512..520].to_vec();
-    let relayer =  arrayref::array_ref![_instruction_data[520..552], 0, 32];
+    let relayer = *arrayref::array_ref![_instruction_data[520..552], 0, 32];
 
     // Check that relayer in integrity hash == signer.
     // In case of deposit the depositor is their own relayer
-    if *signing_address != Pubkey::new(relayer) {
+    if *signing_address != Pubkey::from(relayer) {
         msg!(
             "Specified relayer is not signer. {:?} != {:?}",
             *signing_address,
-            Pubkey::new(relayer)
+            Pubkey::from(relayer)
         );
         return Err(ProgramError::InvalidAccountData);
     }
@@ -398,15 +381,15 @@ pub fn try_initialize_tmp_storage_pda(
     let merkle_tree_pda_pubkey = _instruction_data[560..592].to_vec();
     tmp_storage_pda_data.merkle_tree_index = _instruction_data[592];
 
-    if merkle_tree_pda_pubkey
-        != MERKLE_TREE_ACC_BYTES_ARRAY
-            [<usize as TryFrom<u8>>::try_from(tmp_storage_pda_data.merkle_tree_index).unwrap()]
-        .0
-        .to_vec()
+    if
+        merkle_tree_pda_pubkey !=
+        MERKLE_TREE_ACC_BYTES_ARRAY[
+            <usize as TryFrom<u8>>::try_from(tmp_storage_pda_data.merkle_tree_index).unwrap()
+        ].0.to_vec()
     {
         msg!(
             "Merkle tree in tx integrity hash not whitelisted or wrong ID. is: {:?}",
-            merkle_tree_pda_pubkey,
+            merkle_tree_pda_pubkey
         );
         return Err(ProgramError::InvalidAccountData);
     }
@@ -419,7 +402,7 @@ pub fn try_initialize_tmp_storage_pda(
         tmp_storage_pda_data.tx_integrity_hash.to_vec(),
         tmp_storage_pda_data.merkle_tree_index,
         encrypted_utxos.to_vec(),
-        merkle_tree_pda_pubkey,
+        merkle_tree_pda_pubkey
     )?;
     for i in 0..11 {
         tmp_storage_pda_data.changed_constants[i] = true;
@@ -427,7 +410,7 @@ pub fn try_initialize_tmp_storage_pda(
     tmp_storage_pda_data.current_instruction_index += 1;
     ChecksAndTransferState::pack_into_slice(
         &tmp_storage_pda_data,
-        &mut tmp_storage_pda.data.borrow_mut(),
+        &mut tmp_storage_pda.data.borrow_mut()
     );
     msg!("packed init.");
     Ok(())

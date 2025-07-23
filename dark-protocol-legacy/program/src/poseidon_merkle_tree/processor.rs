@@ -123,8 +123,8 @@ impl<'a, 'b> MerkleTreeProcessor<'a, 'b> {
             )?;
             pubkey_check(
                 *_tmp_storage_pda.key,
-                solana_program::pubkey::Pubkey::new(
-                    arrayref::array_ref![merkle_tree_pda_data.pubkey_locked, 0, 32]
+                solana_program::pubkey::Pubkey::from(
+                    *arrayref::array_ref![merkle_tree_pda_data.pubkey_locked, 0, 32]
                 ),
                 String::from("Merkle tree locked by another account."),
             )?;
@@ -162,8 +162,8 @@ impl<'a, 'b> MerkleTreeProcessor<'a, 'b> {
                 msg!("Locked at slot: {}", merkle_tree_pda_data.time_locked);
                 msg!(
                     "Locked by: {:?}",
-                    solana_program::pubkey::Pubkey::new(
-                        arrayref::array_ref![merkle_tree_pda_data.pubkey_locked, 0, 32]
+                    solana_program::pubkey::Pubkey::from(
+                        *arrayref::array_ref![merkle_tree_pda_data.pubkey_locked, 0, 32]
                     )
                 );
             } else if merkle_tree_pda_data.time_locked + LOCK_DURATION > current_slot {
@@ -223,8 +223,8 @@ impl<'a, 'b> MerkleTreeProcessor<'a, 'b> {
             //checking if signer locked
             pubkey_check(
                 *_tmp_storage_pda.key,
-                solana_program::pubkey::Pubkey::new(
-                    arrayref::array_ref![merkle_tree_pda_data.pubkey_locked, 0, 32]
+                solana_program::pubkey::Pubkey::from(
+                    *arrayref::array_ref![merkle_tree_pda_data.pubkey_locked, 0, 32]
                 ),
                 String::from("Merkle tree locked by other account."),
             )?;
@@ -330,8 +330,8 @@ fn merkle_tree_pubkey_check(
     program_id: Pubkey,
 ) -> Result<(), ProgramError> {
     if account_pubkey
-        != solana_program::pubkey::Pubkey::new(
-            &MERKLE_TREE_ACC_BYTES_ARRAY
+        != solana_program::pubkey::Pubkey::from(
+            MERKLE_TREE_ACC_BYTES_ARRAY
                 [<usize as TryFrom<u8>>::try_from(merkle_tree_index).unwrap()]
             .0,
         )
@@ -339,8 +339,8 @@ fn merkle_tree_pubkey_check(
         msg!(
             "invalid merkle tree {:?}, {:?}",
             account_pubkey,
-            solana_program::pubkey::Pubkey::new(
-                &MERKLE_TREE_ACC_BYTES_ARRAY
+            solana_program::pubkey::Pubkey::from(
+                MERKLE_TREE_ACC_BYTES_ARRAY
                     [<usize as TryFrom<u8>>::try_from(merkle_tree_index).unwrap()]
                 .0
             )

@@ -303,7 +303,9 @@ pub async fn update_merkle_tree(
             let merkle_tree_pda_account_data =
                 MerkleTree::unpack(&merkle_tree_pda_account.data.clone()).unwrap();
             assert_eq!(
-                Pubkey::new(&merkle_tree_pda_account_data.pubkey_locked[..]),
+                Pubkey::from(
+                    *arrayref::array_ref![merkle_tree_pda_account_data.pubkey_locked[..], 0, 32]
+                ),
                 *tmp_storage_pda_pubkey
             );
             let tmp_storage_pda_account = program_context
@@ -1169,10 +1171,10 @@ async fn deposit_should_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((&merkle_tree_pda_pubkey, 16658, None));
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
     accounts_vector.push((&merkle_tree_pda_token_pubkey, 0, None));
 
     //private key is hardcoded to have a deterministic signer as relayer
@@ -1343,9 +1345,9 @@ async fn internal_transfer_should_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
 
     accounts_vector.push((
         &merkle_tree_pda_pubkey,
@@ -1382,7 +1384,7 @@ async fn internal_transfer_should_succeed() {
     //    &program_id
     // );
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
     let user_pda_token_pubkey = Keypair::new().pubkey();
     let random_user_owner_pubkey = Keypair::new().pubkey();
 
@@ -1523,7 +1525,9 @@ async fn internal_transfer_should_succeed() {
 #[tokio::test]
 async fn withdrawal_should_succeed() {
     let ix_withdraw_data = read_test_data(std::string::String::from("withdraw.txt"));
-    let recipient = Pubkey::new(&ix_withdraw_data[489..521]);
+    let recipient = Pubkey::from(
+        *arrayref::array_ref![&ix_withdraw_data[489..521], 0, 32]
+    );
     let amount: u64 = (-i64::from_le_bytes(ix_withdraw_data[521..529].try_into().unwrap()))
         .try_into()
         .unwrap();
@@ -1535,9 +1539,9 @@ async fn withdrawal_should_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
     let relayer_pda_token_pubkey = Keypair::new().pubkey();
 
     accounts_vector.push((
@@ -1683,7 +1687,7 @@ async fn withdrawal_should_succeed() {
 #[tokio::test]
 async fn double_spend_should_not_succeed() {
     let ix_withdraw_data = read_test_data(std::string::String::from("withdraw.txt"));
-    let recipient = Pubkey::new(&ix_withdraw_data[489..521]);
+    let recipient = Pubkey::from(*arrayref::array_ref![&ix_withdraw_data[489..521], 0, 32]);
     let amount: u64 = (-i64::from_le_bytes(ix_withdraw_data[521..529].try_into().unwrap()))
         .try_into()
         .unwrap();
@@ -1694,7 +1698,7 @@ async fn double_spend_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((
         &merkle_tree_pda_pubkey,
         16658,
@@ -1724,7 +1728,7 @@ async fn double_spend_should_not_succeed() {
     //    &program_id
     // );
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
 
     let relayer_pda_token_pubkey = Keypair::new().pubkey();
 
@@ -1844,10 +1848,10 @@ async fn deposit_with_wrong_proof_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((&merkle_tree_pda_pubkey, 16658, None));
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
     accounts_vector.push((&merkle_tree_pda_token_pubkey, 0, None));
 
     //private key is hardcoded to have a deterministic signer as relayer
@@ -1970,10 +1974,10 @@ async fn deposit_with_wrong_amount_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((&merkle_tree_pda_pubkey, 16658, None));
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
     accounts_vector.push((&merkle_tree_pda_token_pubkey, 0, None));
     let user_pda_token_pubkey = Keypair::new().pubkey();
     accounts_vector.push((&user_pda_token_pubkey, 0, None));
@@ -2116,9 +2120,9 @@ async fn compute_prepared_inputs_should_succeed() {
     // Creates program, accounts, setup.
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     //create pubkey for tmporary storage account
-    // let tmp_storage_pda_pubkey = Pubkey::new_unique();
+    // let tmp_storage_pda_pubkey = Pubkey::from_unique();
 
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     let signer_keypair = solana_sdk::signer::keypair::Keypair::from_bytes(&PRIVATE_KEY).unwrap();
     let signer_pubkey = signer_keypair.pubkey();
     // start program the program with the exact account state.
@@ -2257,7 +2261,7 @@ async fn compute_prepared_inputs_should_succeed() {
 async fn compute_miller_output_should_succeed() {
     // Creates program, accounts, setup.
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
-    // let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    // let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     let signer_keypair = solana_sdk::signer::keypair::Keypair::from_bytes(&PRIVATE_KEY).unwrap();
     let signer_pubkey = signer_keypair.pubkey();
     // start program the program with the exact account state.
@@ -2383,7 +2387,7 @@ async fn submit_proof_with_wrong_root_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((&merkle_tree_pda_pubkey, 16658, None));
     let signer_keypair = solana_sdk::signer::keypair::Keypair::from_bytes(&PRIVATE_KEY).unwrap();
     let signer_pubkey = signer_keypair.pubkey();
@@ -2514,7 +2518,7 @@ async fn search_root_at_last_root_index_should_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     let mut merkle_tree_data: Vec<u8> = vec![0u8; 16658];
     // initing Merkle tree
     // insert root at last place
@@ -2629,7 +2633,7 @@ async fn signer_acc_not_in_first_place_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((&merkle_tree_pda_pubkey, 16658, None));
 
     let signer_keypair = solana_sdk::signer::keypair::Keypair::from_bytes(&PRIVATE_KEY).unwrap();
@@ -2764,7 +2768,7 @@ async fn submit_proof_with_wrong_signer_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((&merkle_tree_pda_pubkey, 16658, None));
 
     let signer_keypair = solana_sdk::signer::keypair::Keypair::from_bytes(&PRIVATE_KEY).unwrap();
@@ -2884,7 +2888,7 @@ async fn submit_proof_with_wrong_signer_should_not_succeed() {
 #[should_panic]
 async fn withdrawal_wrong_recipient_should_not_succeed() {
     let ix_withdraw_data = read_test_data(std::string::String::from("withdraw.txt"));
-    let recipient = solana_sdk::signer::keypair::Keypair::new().pubkey(); //Pubkey::new(&ix_withdraw_data[489..521]);
+    let recipient = solana_sdk::signer::keypair::Keypair::new().pubkey(); //Pubkey::from(&ix_withdraw_data[489..521]);
     let amount: u64 = (-i64::from_le_bytes(ix_withdraw_data[521..529].try_into().unwrap()))
         .try_into()
         .unwrap();
@@ -2895,7 +2899,7 @@ async fn withdrawal_wrong_recipient_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((
         &merkle_tree_pda_pubkey,
         16658,
@@ -2922,7 +2926,7 @@ async fn withdrawal_wrong_recipient_should_not_succeed() {
     //    &program_id
     // );
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_withdraw_data[601] as usize].1);
 
     let relayer_pda_token_pubkey = Keypair::new().pubkey();
 
@@ -3079,10 +3083,10 @@ async fn wrong_merkle_tree_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111112111111").unwrap();
     let mut accounts_vector = Vec::new();
     // Creates pubkey for tmporary storage account
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
     accounts_vector.push((&merkle_tree_pda_pubkey, 16658, None));
     let merkle_tree_pda_token_pubkey =
-        Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[ix_data[601] as usize].1);
+        Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[ix_data[601] as usize].1);
     accounts_vector.push((&merkle_tree_pda_token_pubkey, 0, None));
 
     //private key is hardcoded to have a deterministic signer as relayer
@@ -3249,7 +3253,7 @@ async fn merkle_tree_insert_should_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111111111111").unwrap();
 
     let tmp_storage_pda_pubkey = Pubkey::new_unique();
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
 
     let signer_keypair = solana_sdk::signer::keypair::Keypair::from_bytes(&PRIVATE_KEY).unwrap();
     let signer_pubkey = signer_keypair.pubkey();
@@ -3329,7 +3333,7 @@ async fn merkle_tree_insert_should_succeed() {
 async fn merkle_tree_init_with_wrong_signer_should_not_succeed() {
     let program_id = Pubkey::from_str("TransferLamports111111111111111111111111111").unwrap();
 
-    let merkle_tree_pda_pubkey = Pubkey::new(&MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
+    let merkle_tree_pda_pubkey = Pubkey::from(MERKLE_TREE_ACC_BYTES_ARRAY[0].0);
 
     let signer_keypair = solana_sdk::signer::keypair::Keypair::new();
     let signer_pubkey = signer_keypair.pubkey();
@@ -3449,7 +3453,7 @@ async fn user_account_onchain_test() {
 
     assert_eq!(
         signer_keypair.pubkey(),
-        Pubkey::new(&user_account_data_init.data[2..34])
+        Pubkey::from(*arrayref::array_ref![&user_account_data_init.data[2..34], 0, 32])
     );
 
     println!("initializing user account success");
@@ -3573,7 +3577,7 @@ async fn test_user_account_checks() {
 
     assert_eq!(
         signer_keypair.pubkey(),
-        Pubkey::new(&user_account_data_init.data[2..34])
+        Pubkey::from(*arrayref::array_ref![&user_account_data_init.data[2..34], 0, 32])
     );
 
     //try initialize user_account account again
@@ -3606,7 +3610,7 @@ async fn test_user_account_checks() {
     assert_eq!(1u8, user_account_data_init.data[0]);
     assert_eq!(
         signer_keypair.pubkey(),
-        Pubkey::new(&user_account_data_init.data[2..34])
+        Pubkey::from(*arrayref::array_ref![&user_account_data_init.data[2..34], 0, 32])
     );
 
     //try modifying user_account

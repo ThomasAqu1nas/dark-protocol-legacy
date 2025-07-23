@@ -1,9 +1,16 @@
 [workspace]
-members = [ "client","dark-protocol-legacy/program"]
-resolver = "3"
+members = [ "actix-server", "program-sdk","dark-protocol-legacy/program"]
+resolver = "2"
 
 [patch.crates-io]
 ark-ec = { path = "patches/ark-ec" }
-
-[workspace.dependencies]
-solana-program = "1.8.16"
+#ark-ff = { git = "https://github.com/Lightprotocol/algebra", branch="release-0.3.0" }
+#ark-bn254 = {git = "https://github.com/Lightprotocol/curves", branch="release-0.3.0"}
+#ark-serialize = { git = "https://github.com/Lightprotocol/algebra", branch="release-0.3.0"}
+#elliptic-curve = { git = "https://github.com/RustCrypto/traits", tag = "elliptic-curve-v0.13.8" }
+#zstd       = { version = "=0.10.2+zstd.1.5.2" }
+## И соответствующую zstd-safe
+#zstd-safe  = { version = "=4.1.4+zstd.1.5.2", package = "zstd-safe" }
+#[workspace.dependencies]
+#solana-program = "1.8.16"
+#elliptic-curve = "0.13.8"

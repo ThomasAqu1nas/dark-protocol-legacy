@@ -80,8 +80,8 @@ pub fn process_instruction(
         }
 
         if *merkle_tree_pda.key
-            != solana_program::pubkey::Pubkey::new(
-                &MERKLE_TREE_ACC_BYTES_ARRAY[<usize as TryFrom<u8>>::try_from(
+            != solana_program::pubkey::Pubkey::from(
+                MERKLE_TREE_ACC_BYTES_ARRAY[<usize as TryFrom<u8>>::try_from(
                     tmp_storage_pda_data.merkle_tree_index,
                 )
                 .unwrap()]
@@ -91,8 +91,8 @@ pub fn process_instruction(
             msg!(
                 "Passed-in Merkle tree account is invalid. {:?} != {:?}",
                 *merkle_tree_pda.key,
-                solana_program::pubkey::Pubkey::new(
-                    &MERKLE_TREE_ACC_BYTES_ARRAY[<usize as TryFrom<u8>>::try_from(
+                solana_program::pubkey::Pubkey::from(
+                    MERKLE_TREE_ACC_BYTES_ARRAY[<usize as TryFrom<u8>>::try_from(
                         tmp_storage_pda_data.merkle_tree_index
                     )
                     .unwrap()]
@@ -107,8 +107,8 @@ pub fn process_instruction(
         }
 
         if *merkle_tree_pda_token.key
-            != solana_program::pubkey::Pubkey::new(
-                &MERKLE_TREE_ACC_BYTES_ARRAY[<usize as TryFrom<u8>>::try_from(
+            != solana_program::pubkey::Pubkey::from(
+                MERKLE_TREE_ACC_BYTES_ARRAY[<usize as TryFrom<u8>>::try_from(
                     tmp_storage_pda_data.merkle_tree_index,
                 )
                 .unwrap()]
@@ -196,8 +196,8 @@ pub fn process_instruction(
             } else if ext_amount < 0 {
                 let recipient_account = next_account_info(account)?;
                 if *recipient_account.key
-                    != solana_program::pubkey::Pubkey::new(
-                        arrayref::array_ref![tmp_storage_pda_data.recipient, 0, 32]
+                    != solana_program::pubkey::Pubkey::from(
+                        *arrayref::array_ref![tmp_storage_pda_data.recipient, 0, 32]
                     )
                 {
                     msg!("Recipient has to be address specified in tx integrity hash.");
@@ -225,8 +225,8 @@ pub fn process_instruction(
         }
 
         if relayer_fee > 0 {
-            if Pubkey::new(
-                arrayref::array_ref![tmp_storage_pda_data.signing_address, 0, 32]
+            if Pubkey::from(
+                *arrayref::array_ref![tmp_storage_pda_data.signing_address, 0, 32]
             ) != *signer_account.key {
                 msg!("Wrong relayer.");
                 return Err(ProgramError::InvalidArgument);

@@ -59,7 +59,7 @@ pub fn process_instruction(
     if _instruction_data.len() >= 9 && _instruction_data[8] == 240 {
         let merkle_tree_storage_acc = next_account_info(account)?;
         // Check whether signer is merkle_tree_init_authority.
-        if *signer_account.key != Pubkey::new(&MERKLE_TREE_INIT_AUTHORITY) {
+        if *signer_account.key != Pubkey::from(MERKLE_TREE_INIT_AUTHORITY) {
             msg!("Signer is not merkle tree init authority.");
             return Err(ProgramError::IllegalOwner);
         }
@@ -81,8 +81,8 @@ pub fn process_instruction(
     else if _instruction_data.len() >= 9 && _instruction_data[8] == 100 {
         let user_account = next_account_info(account)?;
         let rent_sysvar_info = next_account_info(account)?;
-        let rent = &Rent::from_account_info(rent_sysvar_info)?;
-        initialize_user_account(user_account, *signer_account.key, *rent)
+        let rent = Rent::from_account_info(rent_sysvar_info)?;
+        initialize_user_account(user_account, *signer_account.key, rent)
     }
     // Transact with shielded pool.
     // This instruction has to be called 1502 times to perform all computation.
@@ -107,8 +107,8 @@ pub fn process_instruction(
                 // All data used during computation is passed in as instruction_data with this instruction.
                 // No subsequent instructions read instruction_data.
                 // instruction_data:
-                //    [ root,
-                //      public amount,
+                //    [ root,                   
+                //      public amount,          
                 //      external data hash,
                 //      nullifier0,
                 //      nullifier1,

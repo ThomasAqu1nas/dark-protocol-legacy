@@ -1,52 +1,54 @@
-
 pragma circom 2.0.0;
 
-include "circomlib/circuits/poseidon.circom";
-include "circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/poseidon.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
 include "./merkleTree.circom";
 
 // Universal circuit for deposit and withdrawal in Dark Protocol
 template Transaction(levels, ENC_LEN) {
     // Public signals
     signal input root; // Merkle tree root
-    signal input publicAmount; // -7 SOL (deposit) or 6 SOL (withdrawal)
-    signal input txIntegrityHash; // Keccak256(recipient, ext_amount, ...)
+    signal input publicAmount; // u64, absolute amount (e.g., 6000000000 lamports)
+    signal input txIntegrityHash; // Poseidon hash of transaction inputs
     signal input nullifier0; // Nullifier for UTXO0
     signal input nullifier1; // Nullifier for UTXO1
-    signal input leafRight; // New UTXO (e.g., 4 SOL)
-    signal input leafLeft; // New UTXO (e.g., 3 SOL or 0 SOL)
+    signal input leafRight; // New UTXO (right)
+    signal input leafLeft; // New UTXO (left)
 
     // Private signals
-    signal private input amount0; // Input amount (0 for deposit, 10 SOL for withdrawal)
-    signal private input amount1; // 0
-    signal private input secretKey0; // Key for UTXO0
-    signal private input secretKey1; // Key for UTXO1
+    signal private input amount0; // Input amount (0 for deposit, e.g., 6000000000 for withdrawal)
+    signal private input amount1; // Input amount (usually 0)
+    signal private input secretKey0; // Secret key for UTXO0
+    signal private input secretKey1; // Secret key for UTXO1
     signal private input randomness0; // Randomness for UTXO0
     signal private input randomness1; // Randomness for UTXO1
-    signal private input outAmount0; // Output amount (4 SOL)
-    signal private input outAmount1; // Output amount (3 SOL or 0 SOL)
-    signal private input outSecretKey0; // Key for new UTXO
-    signal private input outSecretKey1; // Key for new UTXO
-    signal private input outRandomness0; // Randomness for new UTXO
-    signal private input outRandomness1; // Randomness for new UTXO
-    signal private input recipient; // Recipient pubkey
-    signal private input extAmount; // 7 SOL (deposit) or -6 SOL (withdrawal)
-    signal private input relayer; // Relayer pubkey
-    signal private input fee; // Fee (e.g., 0)
-    signal private input merkleTreePdaPubkey; // Merkle tree pubkey
-    signal private input merkleTreeIndex; // Merkle tree index
-    signal private input encryptedUtxos[ENC_LEN]; // Encrypted UTXOs
+    signal private input outAmount0; // Output amount (e.g., 0 for withdrawal)
+    signal private input outAmount1; // Output amount (e.g., 0)
+    signal private input outSecretKey0; // Secret key for new UTXO (right)
+    signal private input outSecretKey1; // Secret key for new UTXO (left)
+    signal private input outRandomness0; // Randomness for new UTXO (right)
+    signal private input outRandomness1; // Randomness for new UTXO (left)
+    signal private input recipient; // Recipient pubkey (32 bytes)
+    signal private input extAmount; // i64, positive for deposit (e.g., 6000000000), negative for withdrawal (e.g., -6000000000)
+    signal private input relayer; // Relayer pubkey (32 bytes)
+    signal private input fee; // u64, relayer fee (e.g., 100000000)
+    signal private input merkleTreePdaPubkey; // Merkle tree pubkey (32 bytes)
+    signal private input merkleTreeIndex; // Merkle tree index (u8)
+    signal private input encryptedUtxos[ENC_LEN]; // Encrypted UTXOs (256 bytes, ENC_LEN = 8)
     signal private input merklePath0[levels]; // Merkle path for UTXO0
     signal private input pathIndices0[levels]; // Path bits for UTXO0
     signal private input merklePath1[levels]; // Merkle path for UTXO1
     signal private input pathIndices1[levels]; // Path bits for UTXO1
-    signal private input isDeposit; // 1 for deposit, 0 for withdrawal
 
-    // 1. Conditional logic for deposit
-    component isDepositCheck = IsZero();
-    isDepositCheck.in <== isDeposit;
-    (amount0 * (1 - isDepositCheck.out)) === 0; // amount0 == 0 for deposit
-    (amount1 * (1 - isDepositCheck.out)) === 0; // amount1 == 0 for deposit
+    // 1. Determine deposit or withdrawal
+    component isExtAmountPositive = GreaterThan(252);
+    isExtAmountPositive.in[0] <== extAmount;
+    isExtAmountPositive.in[1] <== 0;
+    var isDeposit = isExtAmountPositive.out;
+
+    // For deposit: amount0 = amount1 = 0
+    (amount0 * isExtAmountPositive.out) === 0;
+    (amount1 * isExtAmountPositive.out) === 0;
 
     // 2. Input UTXOs
     // UTXO0: Poseidon(amount0, secretKey0, randomness0)
@@ -66,8 +68,8 @@ template Transaction(levels, ENC_LEN) {
     tree0.leaf <== hasher0.out;
     tree0.root <== root;
     for (var i = 0; i < levels; i++) {
-        tree0.pathElements[i] <== merklePath0[i] * (1 - isDepositCheck.out); // 0 for deposit
-        tree0.pathIndices[i] <== pathIndices0[i] * (1 - isDepositCheck.out);
+        tree0.pathElements[i] <== merklePath0[i] * (1 - isExtAmountPositive.out);
+        tree0.pathIndices[i] <== pathIndices0[i] * (1 - isExtAmountPositive.out);
     }
 
     // UTXO1: Poseidon(amount1, secretKey1, randomness1)
@@ -87,8 +89,8 @@ template Transaction(levels, ENC_LEN) {
     tree1.leaf <== hasher1.out;
     tree1.root <== root;
     for (var i = 0; i < levels; i++) {
-        tree1.pathElements[i] <== merklePath1[i] * (1 - isDepositCheck.out); // 0 for deposit
-        tree1.pathIndices[i] <== pathIndices1[i] * (1 - isDepositCheck.out);
+        tree1.pathElements[i] <== merklePath1[i] * (1 - isExtAmountPositive.out);
+        tree1.pathIndices[i] <== pathIndices1[i] * (1 - isExtAmountPositive.out);
     }
 
     // 3. Output UTXOs
@@ -107,10 +109,16 @@ template Transaction(levels, ENC_LEN) {
     outHasher1.out === leafLeft;
 
     // 4. Balance check
-    amount0 + amount1 === outAmount0 + outAmount1 + publicAmount;
+    // Adjust extAmount for relayer fee in deposits
+    signal extAmountAdjusted;
+    extAmountAdjusted <== extAmount - fee * isExtAmountPositive.out;
+    // publicAmount = |extAmountAdjusted|
+    publicAmount === extAmountAdjusted * (2 * isDeposit - 1);
+    // Balance: amount0 + amount1 = outAmount0 + outAmount1 + extAmountAdjusted * (1 - 2 * isDeposit)
+    amount0 + amount1 === outAmount0 + outAmount1 + (extAmountAdjusted * (1 - 2 * isDeposit));
 
-    // 5. txIntegrityHash check (placeholder, should be Keccak256)
-    component integrityHasher = Poseidon(7 + ENC_LEN); // Placeholder
+    // 5. txIntegrityHash check
+    component integrityHasher = Poseidon(7 + ENC_LEN);
     integrityHasher.inputs[0] <== recipient;
     integrityHasher.inputs[1] <== extAmount;
     integrityHasher.inputs[2] <== relayer;
