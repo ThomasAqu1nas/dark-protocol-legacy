@@ -16,6 +16,7 @@ use crate::instruction::{
 pub mod instruction;
 pub mod prover;
 pub mod utils;
+pub mod inputs;
 
 pub struct MainProgram {
     program_id: Pubkey,
