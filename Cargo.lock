@@ -5170,14 +5170,17 @@ dependencies = [
  "ark-crypto-primitives 0.5.0",
  "ark-ff 0.5.0",
  "ark-groth16 0.5.0",
+ "ark-relations 0.5.1",
  "ark-serialize 0.5.0",
  "ark-std 0.5.0",
  "arrayref",
+ "color-eyre",
  "ethers-core",
  "num-bigint 0.4.6",
  "solana-client",
  "solana-poseidon",
  "solana-sdk",
+ "thiserror 2.0.12",
 ]
 
 [[package]]

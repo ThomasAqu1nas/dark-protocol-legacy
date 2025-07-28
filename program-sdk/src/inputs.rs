@@ -1,44 +1,43 @@
-use ark_bn254::{ Fq, Fr };
+use ark_bn254::Fr;
 use ark_circom::CircomBuilder;
-use ark_crypto_primitives::sponge::Absorb;
-use ark_ff::{ BigInteger256, Field };
+use ark_ff::BigInteger256;
 
 #[derive(Debug, Clone)]
 pub struct ProofInputsFr {
     // ✅ Публичные сигналы (попадают в publicInputs + on-chain)
-    pub root: Fr, // [in] — начальный параметр
-    pub public_amount: Fr, // [in] — вычисляется из ext_amount, fee
+    pub root: Fr,              // [in] — начальный параметр
+    pub public_amount: Fr,     // [in] — вычисляется из ext_amount, fee
     pub tx_integrity_hash: Fr, // [computed] ← Poseidon(recipient, ..., encrypted_utxos)
-    pub nullifier0: Fr, // [computed] ← Poseidon(secret_key0, 0)
-    pub nullifier1: Fr, // [computed] ← Poseidon(secret_key1, 1)
+    pub nullifier0: Fr,        // [computed] ← Poseidon(secret_key0, 0)
+    pub nullifier1: Fr,        // [computed] ← Poseidon(secret_key1, 1)
     pub leaf_right: Fr, // [computed] ← Poseidon(out_amount0, out_secret_key0, out_randomness0)
-    pub leaf_left: Fr, // [computed] ← Poseidon(out_amount1, out_secret_key1, out_randomness1)
+    pub leaf_left: Fr,  // [computed] ← Poseidon(out_amount1, out_secret_key1, out_randomness1)
 
     // 🔒 Приватные сигналы (inputs в circuit, не попадают в пруф)
-    pub amount0: Fr, // [in] — начальный параметр
-    pub amount1: Fr, // [in] — начальный параметр
-    pub secret_key0: Fr, // [in] — начальный параметр
-    pub secret_key1: Fr, // [in] — начальный параметр
-    pub randomness0: Fr, // [in] — начальный параметр
-    pub randomness1: Fr, // [in] — начальный параметр
-    pub out_amount0: Fr, // [in] — начальный параметр
-    pub out_amount1: Fr, // [in] — начальный параметр
-    pub out_secret_key0: Fr, // [in] — начальный параметр
-    pub out_secret_key1: Fr, // [in] — начальный параметр
-    pub out_randomness0: Fr, // [in] — начальный параметр
-    pub out_randomness1: Fr, // [in] — начальный параметр
-    pub recipient: Fr, // [in] — начальный параметр
-    pub ext_amount: Fr, // [in] — начальный параметр (может быть < 0)
-    pub relayer: Fr, // [in] — начальный параметр
-    pub fee: Fr, // [in] — начальный параметр
+    pub amount0: Fr,                // [in] — начальный параметр
+    pub amount1: Fr,                // [in] — начальный параметр
+    pub secret_key0: Fr,            // [in] — начальный параметр
+    pub secret_key1: Fr,            // [in] — начальный параметр
+    pub randomness0: Fr,            // [in] — начальный параметр
+    pub randomness1: Fr,            // [in] — начальный параметр
+    pub out_amount0: Fr,            // [in] — начальный параметр
+    pub out_amount1: Fr,            // [in] — начальный параметр
+    pub out_secret_key0: Fr,        // [in] — начальный параметр
+    pub out_secret_key1: Fr,        // [in] — начальный параметр
+    pub out_randomness0: Fr,        // [in] — начальный параметр
+    pub out_randomness1: Fr,        // [in] — начальный параметр
+    pub recipient: Fr,              // [in] — начальный параметр
+    pub ext_amount: Fr,             // [in] — начальный параметр (может быть < 0)
+    pub relayer: Fr,                // [in] — начальный параметр
+    pub fee: Fr,                    // [in] — начальный параметр
     pub merkle_tree_pda_pubkey: Fr, // [in] — начальный параметр
-    pub merkle_tree_index: Fr, // [in] — начальный параметр
+    pub merkle_tree_index: Fr,      // [in] — начальный параметр
 
     pub encrypted_utxos: Vec<Fr>, // [in] — начальный параметр
-    pub merkle_path0: Vec<Fr>, // [in] — Merkle proof for UTXO0
-    pub path_indices0: Vec<Fr>, // [in] — Merkle path bits for UTXO0
-    pub merkle_path1: Vec<Fr>, // [in] — Merkle proof for UTXO1
-    pub path_indices1: Vec<Fr>, // [in] — Merkle path bits for UTXO1
+    pub merkle_path0: Vec<Fr>,    // [in] — Merkle proof for UTXO0
+    pub path_indices0: Vec<Fr>,   // [in] — Merkle path bits for UTXO0
+    pub merkle_path1: Vec<Fr>,    // [in] — Merkle proof for UTXO1
+    pub path_indices1: Vec<Fr>,   // [in] — Merkle path bits for UTXO1
 }
 
 #[derive(Debug, Clone)]
@@ -81,8 +80,8 @@ impl ProofInputsBigInterger256 {
     pub fn push_inputs(
         &self,
         circom_builder: &mut CircomBuilder<
-            ark_ff::Fp<ark_ff::MontBackend<ark_bn254::FrConfig, 4>, 4>
-        >
+            ark_ff::Fp<ark_ff::MontBackend<ark_bn254::FrConfig, 4>, 4>,
+        >,
     ) {
         circom_builder.push_input("root", self.root);
         circom_builder.push_input("public_amount", self.public_amount);
@@ -161,23 +160,28 @@ impl Into<ProofInputsBigInterger256> for &ProofInputsFr {
             fee: self.fee.into_int256(),
             merkle_tree_pda_pubkey: self.merkle_tree_pda_pubkey.into_int256(),
             merkle_tree_index: self.merkle_tree_index.into_int256(),
-            encrypted_utxos: self.encrypted_utxos
+            encrypted_utxos: self
+                .encrypted_utxos
                 .iter()
                 .map(|fq| fq.into_int256())
                 .collect(),
-            merkle_path0: self.merkle_path0
+            merkle_path0: self
+                .merkle_path0
                 .iter()
                 .map(|fq| fq.into_int256())
                 .collect(),
-            path_indices0: self.path_indices0
+            path_indices0: self
+                .path_indices0
                 .iter()
                 .map(|fq| fq.into_int256())
                 .collect(),
-            merkle_path1: self.merkle_path1
+            merkle_path1: self
+                .merkle_path1
                 .iter()
                 .map(|fq| fq.into_int256())
                 .collect(),
-            path_indices1: self.path_indices1
+            path_indices1: self
+                .path_indices1
                 .iter()
                 .map(|fq| fq.into_int256())
                 .collect(),
