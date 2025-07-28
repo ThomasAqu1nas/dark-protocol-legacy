@@ -2,7 +2,7 @@ use ark_ff::BigInteger256;
 use solana_poseidon::PoseidonHash;
 use solana_sdk::pubkey::Pubkey;
 
-use crate::{ instruction::{ instruction_indexes, TEMPLATE_DISC }, utils::u64x4_to_u8x32 };
+use crate::utils::u64x4_to_u8x32;
 pub struct InitializeNewMerkleTreeDataLayout;
 pub struct InitializeUserAccountDataLayout;
 

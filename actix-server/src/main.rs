@@ -1,26 +1,28 @@
-use solana_sdk::{ pubkey::Pubkey, signature::Keypair, signer::{ SeedDerivable, Signer } };
+fn main() {}
 
-fn main() {
-    use const_crypto::ed25519;
+// use solana_sdk::{ pubkey::Pubkey, signature::Keypair, signer::{ SeedDerivable, Signer } };
 
-    //pub const POOL_AUTHORITY_PREFIX: &[u8] = b"pool_authority";
-    const POOL_AUTHORITY_AND_BUMP: ([u8; 32], u8) = ed25519::derive_program_address(
-        &[b"pool_authority"],
-        &Pubkey::from_str_const("smthzQ3PhuKkbpRVkRcUKjiHFgyfUqjmuo68L3dnsKF").to_bytes()
-    );
+// fn main() {
+//     use const_crypto::ed25519;
 
-    //const METEORA_CONFIG:
+//     //pub const POOL_AUTHORITY_PREFIX: &[u8] = b"pool_authority";
+//     const POOL_AUTHORITY_AND_BUMP: ([u8; 32], u8) = ed25519::derive_program_address(
+//         &[b"pool_authority"],
+//         &Pubkey::from_str_const("smthzQ3PhuKkbpRVkRcUKjiHFgyfUqjmuo68L3dnsKF").to_bytes()
+//     );
 
-    pub const ID: Pubkey = Pubkey::new_from_array(POOL_AUTHORITY_AND_BUMP.0);
-    pub const BUMP: u8 = POOL_AUTHORITY_AND_BUMP.1;
+//     //const METEORA_CONFIG:
 
-    // let token_a_vault_address1 = ed25519::derive_program_address(
-    //     seeds,
-    //     program
-    // );
+//     pub const ID: Pubkey = Pubkey::new_from_array(POOL_AUTHORITY_AND_BUMP.0);
+//     pub const BUMP: u8 = POOL_AUTHORITY_AND_BUMP.1;
 
-    println!("ID: {}", ID);
-}
+//     // let token_a_vault_address1 = ed25519::derive_program_address(
+//     //     seeds,
+//     //     program
+//     // );
+
+//     println!("ID: {}", ID);
+// }
 // smthzQ3PhuKkbpRVkRcUKjiHFgyfUqjmuo68L3dnsKF
 //AKdY87CAiQCLVF52ZfBAWxtQeFrWZ5XKwHPPanbCgY1M
 // G3YvJfzMpXr9HZicvKok9erisP12w6NVnkS28QA2KRbv

@@ -13,7 +13,7 @@ use crate::instruction::{
     data::TransactInstructionDataLayout,
 };
 
-pub const TEMPLATE_DISC: u8 = 255;
+//pub const TEMPLATE_DISC: u8 = 255;
 pub enum ProgramInstruction<'a> {
     InitializeNewMerkleTree(&'a GenericAccounts<AccountsInitializeNewMerkleTree>), //240
     InitializeUserAccount(&'a GenericAccounts<AccountsInitializeUserAccount>), //100
@@ -30,14 +30,34 @@ impl<'a> ProgramInstruction<'a> {
                 Instruction {
                     program_id,
                     accounts: process_accounts(accounts),
-                    data: vec![TEMPLATE_DISC, instruction_indexes::INITIALIZE_NEW_MERKLE_TREE],
+                    data: vec![
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        instruction_indexes::INITIALIZE_NEW_MERKLE_TREE
+                    ],
                 }
             }
             &ProgramInstruction::InitializeUserAccount(accounts) => {
                 Instruction {
                     program_id,
                     accounts: process_accounts(accounts),
-                    data: vec![TEMPLATE_DISC, instruction_indexes::INITIALIZE_NEW_USER_ACCOUNT],
+                    data: vec![
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        instruction_indexes::INITIALIZE_NEW_USER_ACCOUNT
+                    ],
                 }
             }
             &ProgramInstruction::Transact { accounts, data } => {

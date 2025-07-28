@@ -11,4 +11,4 @@ const-crypto = "0.3.0"
 serde_json = "1.0.140"
 solana-sdk = "2.2"
 tiny-bip39 = "2.0.0"
-
+program-sdk = { path = "../program-sdk" }
